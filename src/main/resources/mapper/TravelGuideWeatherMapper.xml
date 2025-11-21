@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tourism.mapper.TravelGuideWeatherMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.tourism.entity.TravelGuideWeather">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="guide_id" property="guideId" jdbcType="BIGINT"/>
+        <result column="weather_suggestion_id" property="weatherSuggestionId" jdbcType="BIGINT"/>
+        <result column="is_applied" property="isApplied" jdbcType="BOOLEAN"/>
+        <result column="applied_time" property="appliedTime" jdbcType="TIMESTAMP"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 带天气建议信息的复合结果映射 -->
+    <resultMap id="WithWeatherSuggestionResultMap" type="com.tourism.entity.TravelGuideWeather" extends="BaseResultMap">
+        <association property="weatherSuggestion" javaType="com.tourism.entity.WeatherSuggestion">
+            <id column="weather_suggestion_id" property="id" jdbcType="BIGINT"/>
+            <result column="suggestion_type" property="suggestionType" jdbcType="VARCHAR"/>
+            <result column="content" property="content" jdbcType="LONGVARCHAR"/>
+            <result column="weather_condition" property="weatherCondition" jdbcType="VARCHAR"/>
+            <result column="temperature_min" property="temperatureMin" jdbcType="INTEGER"/>
+            <result column="temperature_max" property="temperatureMax" jdbcType="INTEGER"/>
+            <result column="priority" property="priority" jdbcType="VARCHAR"/>
+            <result column="is_active" property="isActive" jdbcType="BOOLEAN"/>
+        </association>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, guide_id, weather_suggestion_id, is_applied, applied_time, created_time
+    </sql>
+
+    <!-- 带天气建议信息的字段列表 -->
+    <sql id="WithWeatherSuggestion_Column_List">
+        tgw.id, tgw.guide_id, tgw.weather_suggestion_id, tgw.is_applied, tgw.applied_time, tgw.created_time,
+        ws.id as weather_suggestion_id, ws.suggestion_type, ws.content,
+        ws.weather_condition, ws.temperature_min, ws.temperature_max, ws.priority, ws.is_active
+    </sql>
+
+    <!-- 根据路书ID查询关联的天气建议列表 -->
+    <select id="findByGuideId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM travel_guide_weather 
+        WHERE guide_id = #{guideId}
+        ORDER BY created_time ASC
+    </select>
+
+    <!-- 根据路书ID查询关联的天气建议列表（带详情） -->
+    <select id="findByGuideIdWithSuggestion" resultMap="WithWeatherSuggestionResultMap">
+        SELECT 
+            <include refid="WithWeatherSuggestion_Column_List"/>
+        FROM travel_guide_weather tgw
+        LEFT JOIN weather_suggestion ws ON tgw.weather_suggestion_id = ws.id
+        WHERE tgw.guide_id = #{guideId}
+        ORDER BY tgw.created_time ASC
+    </select>
+
+    <!-- 根据天气建议ID查询关联的路书列表 -->
+    <select id="findByWeatherSuggestionId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM travel_guide_weather 
+        WHERE weather_suggestion_id = #{weatherSuggestionId}
+        ORDER BY created_time ASC
+    </select>
+
+    <!-- 根据路书ID和天气建议ID查询关联信息 -->
+    <select id="findByGuideIdAndWeatherSuggestionId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM travel_guide_weather 
+        WHERE guide_id = #{guideId} 
+        AND weather_suggestion_id = #{weatherSuggestionId}
+    </select>
+
+    <!-- 根据路书ID查询已应用的天气建议 -->
+    <select id="findAppliedByGuideId" resultMap="WithWeatherSuggestionResultMap">
+        SELECT 
+            <include refid="WithWeatherSuggestion_Column_List"/>
+        FROM travel_guide_weather tgw
+        LEFT JOIN weather_suggestion ws ON tgw.weather_suggestion_id = ws.id
+        WHERE tgw.guide_id = #{guideId}
+        AND tgw.is_applied = true
+        ORDER BY tgw.applied_time DESC
+    </select>
+
+    <!-- 根据路书ID查询未应用的天气建议 -->
+    <select id="findNotAppliedByGuideId" resultMap="WithWeatherSuggestionResultMap">
+        SELECT 
+            <include refid="WithWeatherSuggestion_Column_List"/>
+        FROM travel_guide_weather tgw
+        LEFT JOIN weather_suggestion ws ON tgw.weather_suggestion_id = ws.id
+        WHERE tgw.guide_id = #{guideId}
+        AND tgw.is_applied = false
+        ORDER BY tgw.created_time ASC
+    </select>
+
+    <!-- 根据路书ID删除所有关联 -->
+    <delete id="deleteByGuideId">
+        DELETE FROM travel_guide_weather 
+        WHERE guide_id = #{guideId}
+    </delete>
+
+    <!-- 根据天气建议ID删除所有关联 -->
+    <delete id="deleteByWeatherSuggestionId">
+        DELETE FROM travel_guide_weather 
+        WHERE weather_suggestion_id = #{weatherSuggestionId}
+    </delete>
+
+    <!-- 根据路书ID和天气建议ID删除关联 -->
+    <delete id="deleteByGuideIdAndWeatherSuggestionId">
+        DELETE FROM travel_guide_weather 
+        WHERE guide_id = #{guideId} 
+        AND weather_suggestion_id = #{weatherSuggestionId}
+    </delete>
+
+    <!-- 检查路书和天气建议的关联是否存在 -->
+    <select id="existsByGuideIdAndWeatherSuggestionId" resultType="java.lang.Boolean">
+        SELECT COUNT(*) > 0 
+        FROM travel_guide_weather 
+        WHERE guide_id = #{guideId} 
+        AND weather_suggestion_id = #{weatherSuggestionId}
+    </select>
+
+    <!-- 统计路书关联的天气建议数量 -->
+    <select id="countByGuideId" resultType="java.lang.Long">
+        SELECT COUNT(*) 
+        FROM travel_guide_weather 
+        WHERE guide_id = #{guideId}
+    </select>
+
+    <!-- 统计路书已应用的天气建议数量 -->
+    <select id="countAppliedByGuideId" resultType="java.lang.Long">
+        SELECT COUNT(*) 
+        FROM travel_guide_weather 
+        WHERE guide_id = #{guideId} 
+        AND is_applied = true
+    </select>
+
+</mapper>
+

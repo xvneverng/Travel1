@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tourism.mapper.AttractionMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.tourism.entity.Attraction">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="LONGVARCHAR"/>
+        <result column="icon" property="icon" jdbcType="VARCHAR"/>
+        <result column="duration" property="duration" jdbcType="VARCHAR"/>
+        <result column="category" property="category" jdbcType="VARCHAR"/>
+        <result column="tags" property="tags" jdbcType="LONGVARCHAR"/>
+        <result column="tips" property="tips" jdbcType="LONGVARCHAR"/>
+        <result column="transportation_info" property="transportationInfo" jdbcType="LONGVARCHAR"/>
+        <result column="latitude" property="latitude" jdbcType="DECIMAL"/>
+        <result column="longitude" property="longitude" jdbcType="DECIMAL"/>
+        <result column="address" property="address" jdbcType="VARCHAR"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+        <result column="updated_time" property="updatedTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, name, description, icon, duration, category, tags, tips, 
+        transportation_info, latitude, longitude, address, created_time, updated_time
+    </sql>
+
+    <!-- 根据景点名称查询景点信息 -->
+    <select id="findByName" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM attraction 
+        WHERE name = #{name}
+    </select>
+
+    <!-- 根据景点类别查询景点列表 -->
+    <select id="findByCategory" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM attraction 
+        WHERE category = #{category} 
+        ORDER BY name ASC
+    </select>
+
+    <!-- 根据景点名称模糊查询 -->
+    <select id="findByNameLike" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM attraction 
+        WHERE name LIKE CONCAT('%', #{name}, '%') 
+        ORDER BY name ASC
+    </select>
+
+    <!-- 查询所有景点 -->
+    <select id="findAll" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM attraction 
+        ORDER BY name ASC
+    </select>
+
+    <!-- 根据景点名称列表查询景点 -->
+    <select id="findByNames" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM attraction 
+        WHERE name IN
+        <foreach collection="names" item="name" open="(" separator="," close=")">
+            #{name}
+        </foreach>
+        ORDER BY name ASC
+    </select>
+
+    <!-- 检查景点名称是否存在 -->
+    <select id="existsByName" resultType="java.lang.Boolean">
+        SELECT COUNT(*) > 0 
+        FROM attraction 
+        WHERE name = #{name}
+    </select>
+
+    <!-- 根据地址模糊查询景点 -->
+    <select id="findByAddressLike" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM attraction 
+        WHERE address LIKE CONCAT('%', #{address}, '%') 
+        ORDER BY name ASC
+    </select>
+
+    <!-- 根据标签查询景点 -->
+    <select id="findByTag" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM attraction 
+        WHERE tags LIKE CONCAT('%', #{tag}, '%') 
+        ORDER BY name ASC
+    </select>
+
+    <!-- 根据坐标范围查询景点 -->
+    <select id="findByLocationRange" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM attraction 
+        WHERE latitude BETWEEN #{minLat} AND #{maxLat}
+        AND longitude BETWEEN #{minLng} AND #{maxLng}
+        ORDER BY name ASC
+    </select>
+
+    <!-- 统计各类别景点数量 -->
+    <select id="countByCategory" resultType="java.util.Map">
+        SELECT 
+            category,
+            COUNT(*) as count
+        FROM attraction 
+        GROUP BY category
+        ORDER BY count DESC
+    </select>
+
+    <!-- 根据关键词搜索景点 -->
+    <select id="searchByKeyword" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM attraction 
+        WHERE name LIKE CONCAT('%', #{keyword}, '%')
+        OR description LIKE CONCAT('%', #{keyword}, '%')
+        OR address LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY 
+            CASE 
+                WHEN name LIKE CONCAT(#{keyword}, '%') THEN 1
+                WHEN name LIKE CONCAT('%', #{keyword}, '%') THEN 2
+                ELSE 3
+            END,
+            name ASC
+    </select>
+
+</mapper>

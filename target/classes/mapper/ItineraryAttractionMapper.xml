@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tourism.mapper.ItineraryAttractionMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.tourism.entity.ItineraryAttraction">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="itinerary_id" property="itineraryId" jdbcType="BIGINT"/>
+        <result column="attraction_id" property="attractionId" jdbcType="BIGINT"/>
+        <result column="sequence_order" property="sequenceOrder" jdbcType="INTEGER"/>
+        <result column="visit_duration" property="visitDuration" jdbcType="VARCHAR"/>
+        <result column="visit_notes" property="visitNotes" jdbcType="LONGVARCHAR"/>
+        <result column="transportation_from_previous" property="transportationFromPrevious" jdbcType="VARCHAR"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+        <result column="updated_time" property="updatedTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 带景点信息的复合结果映射 -->
+    <resultMap id="WithAttractionResultMap" type="com.tourism.entity.ItineraryAttraction" extends="BaseResultMap">
+        <association property="attraction" javaType="com.tourism.entity.Attraction">
+            <id column="attraction_id" property="id" jdbcType="BIGINT"/>
+            <result column="attraction_name" property="name" jdbcType="VARCHAR"/>
+            <result column="attraction_description" property="description" jdbcType="LONGVARCHAR"/>
+            <result column="attraction_icon" property="icon" jdbcType="VARCHAR"/>
+            <result column="attraction_duration" property="duration" jdbcType="VARCHAR"/>
+            <!-- category字段已从数据库表中移除，暂时注释 -->
+            <!-- <result column="attraction_category" property="category" jdbcType="VARCHAR"/> -->
+            <result column="attraction_tags" property="tags" jdbcType="LONGVARCHAR"/>
+            <result column="attraction_tips" property="tips" jdbcType="LONGVARCHAR"/>
+            <result column="attraction_transportation_info" property="transportationInfo" jdbcType="LONGVARCHAR"/>
+            <result column="attraction_latitude" property="latitude" jdbcType="DECIMAL"/>
+            <result column="attraction_longitude" property="longitude" jdbcType="DECIMAL"/>
+            <result column="attraction_address" property="address" jdbcType="VARCHAR"/>
+            <result column="attraction_created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+            <result column="attraction_updated_time" property="updatedTime" jdbcType="TIMESTAMP"/>
+        </association>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, itinerary_id, attraction_id, sequence_order, visit_duration, 
+        visit_notes, transportation_from_previous, created_time, updated_time
+    </sql>
+
+    <!-- 带景点信息的字段列表 -->
+    <sql id="WithAttraction_Column_List">
+        ia.id, ia.itinerary_id, ia.attraction_id, ia.sequence_order, ia.visit_duration, 
+        ia.visit_notes, ia.transportation_from_previous, ia.created_time, ia.updated_time,
+        a.id as attraction_id, a.name as attraction_name, a.description as attraction_description,
+        a.icon as attraction_icon, a.duration as attraction_duration,
+        a.tags as attraction_tags, a.tips as attraction_tips, a.transportation_info as attraction_transportation_info,
+        a.latitude as attraction_latitude, a.longitude as attraction_longitude, a.address as attraction_address,
+        a.created_time as attraction_created_time, a.updated_time as attraction_updated_time
+    </sql>
+
+    <!-- 根据行程ID查询景点关联信息（带景点详情） -->
+    <select id="findByItineraryIdWithAttraction" resultMap="WithAttractionResultMap">
+        SELECT 
+            <include refid="WithAttraction_Column_List"/>
+        FROM itinerary_attraction ia
+        LEFT JOIN attraction a ON ia.attraction_id = a.id
+        WHERE ia.itinerary_id = #{itineraryId}
+        ORDER BY ia.sequence_order ASC
+    </select>
+
+    <!-- 根据行程ID查询景点关联信息 -->
+    <select id="findByItineraryId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM itinerary_attraction 
+        WHERE itinerary_id = #{itineraryId}
+        ORDER BY sequence_order ASC
+    </select>
+
+    <!-- 根据行程ID和景点ID查询关联信息 -->
+    <select id="findByItineraryIdAndAttractionId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM itinerary_attraction 
+        WHERE itinerary_id = #{itineraryId} 
+        AND attraction_id = #{attractionId}
+    </select>
+
+    <!-- 根据行程ID删除景点关联 -->
+    <delete id="deleteByItineraryId">
+        DELETE FROM itinerary_attraction 
+        WHERE itinerary_id = #{itineraryId}
+    </delete>
+
+    <!-- 根据行程ID和景点ID删除关联 -->
+    <delete id="deleteByItineraryIdAndAttractionId">
+        DELETE FROM itinerary_attraction 
+        WHERE itinerary_id = #{itineraryId} 
+        AND attraction_id = #{attractionId}
+    </delete>
+
+    <!-- 统计行程的景点数量 -->
+    <select id="countByItineraryId" resultType="java.lang.Long">
+        SELECT COUNT(*) 
+        FROM itinerary_attraction 
+        WHERE itinerary_id = #{itineraryId}
+    </select>
+
+    <!-- 检查行程和景点的关联是否存在 -->
+    <select id="existsByItineraryIdAndAttractionId" resultType="java.lang.Boolean">
+        SELECT COUNT(*) > 0 
+        FROM itinerary_attraction 
+        WHERE itinerary_id = #{itineraryId} 
+        AND attraction_id = #{attractionId}
+    </select>
+
+    <!-- 批量插入景点关联 -->
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO itinerary_attraction (
+            itinerary_id, attraction_id, sequence_order, visit_duration, 
+            visit_notes, transportation_from_previous, created_time, updated_time
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.itineraryId}, #{item.attractionId}, #{item.sequenceOrder}, 
+                #{item.visitDuration}, #{item.visitNotes}, #{item.transportationFromPrevious},
+                #{item.createdTime}, #{item.updatedTime}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 根据景点ID查询所有关联的行程 -->
+    <select id="findByAttractionId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM itinerary_attraction 
+        WHERE attraction_id = #{attractionId}
+        ORDER BY sequence_order ASC
+    </select>
+
+    <!-- 根据用户ID查询所有景点关联（通过行程关联） -->
+    <select id="findByUserId" resultMap="WithAttractionResultMap">
+        SELECT 
+            <include refid="WithAttraction_Column_List"/>
+        FROM itinerary_attraction ia
+        LEFT JOIN attraction a ON ia.attraction_id = a.id
+        LEFT JOIN travel_itinerary ti ON ia.itinerary_id = ti.id
+        WHERE ti.user_id = #{userId}
+        ORDER BY ti.travel_date ASC, ia.sequence_order ASC
+    </select>
+
+</mapper>

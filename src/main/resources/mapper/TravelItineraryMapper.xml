@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tourism.mapper.TravelItineraryMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.tourism.entity.TravelItinerary">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="travel_date" property="travelDate" jdbcType="DATE"/>
+        <result column="day_number" property="dayNumber" jdbcType="INTEGER"/>
+        <result column="weather_condition" property="weatherCondition" jdbcType="VARCHAR"/>
+        <result column="weather_icon" property="weatherIcon" jdbcType="VARCHAR"/>
+        <result column="temperature_min" property="temperatureMin" jdbcType="INTEGER"/>
+        <result column="temperature_max" property="temperatureMax" jdbcType="INTEGER"/>
+        <result column="notes" property="notes" jdbcType="LONGVARCHAR"/>
+        <result column="travel_feelings" property="travelFeelings" jdbcType="LONGVARCHAR"/>
+        <result column="photo_urls" property="photoUrls" jdbcType="LONGVARCHAR"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+        <result column="updated_time" property="updatedTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, user_id, travel_date, day_number, weather_condition, weather_icon, 
+        temperature_min, temperature_max, notes, travel_feelings, photo_urls, created_time, updated_time
+    </sql>
+
+    <!-- 根据用户ID和日期查询行程 -->
+    <select id="findByUserIdAndDate" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM travel_itinerary 
+        WHERE user_id = #{userId} 
+        AND travel_date = #{travelDate}
+    </select>
+
+    <!-- 根据用户ID和天数查询行程 -->
+    <select id="findByUserIdAndDayNumber" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM travel_itinerary 
+        WHERE user_id = #{userId} 
+        AND day_number = #{dayNumber}
+    </select>
+
+    <!-- 根据用户ID查询所有行程 -->
+    <select id="findByUserId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM travel_itinerary 
+        WHERE user_id = #{userId} 
+        ORDER BY travel_date ASC
+    </select>
+
+    <!-- 根据用户ID查询行程数量 -->
+    <select id="countByUserId" resultType="java.lang.Long">
+        SELECT COUNT(*) 
+        FROM travel_itinerary 
+        WHERE user_id = #{userId}
+    </select>
+
+    <!-- 根据用户ID和日期范围查询行程 -->
+    <select id="findByUserIdAndDateRange" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM travel_itinerary 
+        WHERE user_id = #{userId} 
+        AND travel_date BETWEEN #{startDate} AND #{endDate}
+        ORDER BY travel_date ASC
+    </select>
+
+    <!-- 检查用户是否存在指定日期的行程 -->
+    <select id="existsByUserIdAndDate" resultType="java.lang.Boolean">
+        SELECT COUNT(*) > 0 
+        FROM travel_itinerary 
+        WHERE user_id = #{userId} 
+        AND travel_date = #{travelDate}
+    </select>
+
+    <!-- 根据用户ID和天气条件查询行程 -->
+    <select id="findByUserIdAndWeather" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM travel_itinerary 
+        WHERE user_id = #{userId} 
+        AND weather_condition = #{weatherCondition}
+        ORDER BY travel_date ASC
+    </select>
+
+    <!-- 根据用户ID查询最近的行程 -->
+    <select id="findRecentByUserId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM travel_itinerary 
+        WHERE user_id = #{userId} 
+        ORDER BY travel_date DESC 
+        LIMIT #{limit}
+    </select>
+
+    <!-- 统计用户行程数量按月份分组 -->
+    <select id="countByUserIdGroupByMonth" resultType="java.util.Map">
+        SELECT 
+            DATE_FORMAT(travel_date, '%Y-%m') as month,
+            COUNT(*) as count
+        FROM travel_itinerary 
+        WHERE user_id = #{userId} 
+        AND travel_date >= #{startDate}
+        GROUP BY DATE_FORMAT(travel_date, '%Y-%m')
+        ORDER BY month ASC
+    </select>
+
+    <!-- 更新行程照片URL -->
+    <update id="updatePhotoUrls">
+        UPDATE travel_itinerary 
+        SET photo_urls = #{photoUrls}, updated_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <!-- 添加照片URL到现有列表 -->
+    <update id="addPhotoUrl">
+        UPDATE travel_itinerary 
+        SET photo_urls = CASE 
+            WHEN photo_urls IS NULL OR photo_urls = '[]' THEN CONCAT('["', #{photoUrl}, '"]')
+            ELSE CONCAT(SUBSTRING(photo_urls, 1, LENGTH(photo_urls) - 1), ',"', #{photoUrl}, '"]')
+        END,
+        updated_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <!-- 删除照片URL - 使用更简单的方法，通过Java代码处理JSON -->
+    <update id="removePhotoUrl">
+        UPDATE travel_itinerary 
+        SET photo_urls = #{photoUrls}, updated_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <!-- 清空所有照片URL -->
+    <update id="clearPhotoUrls">
+        UPDATE travel_itinerary 
+        SET photo_urls = '[]', updated_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+</mapper>

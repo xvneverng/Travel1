@@ -1,0 +1,86 @@
+{
+  "description": "POST /api/route/map 接口测试示例",
+  "baseUrl": "http://localhost:8080",
+  "testCases": [
+    {
+      "name": "北京旅游路线规划",
+      "method": "POST",
+      "url": "/api/route/map",
+      "headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      "body": {
+        "locations": ["北京天安门", "故宫博物院", "景山公园", "北海公园"],
+        "strategy": "walking",
+        "includeSteps": true
+      },
+      "expectedResponse": {
+        "code": 200,
+        "message": "地图生成成功",
+        "data": {
+          "mapId": "string",
+          "center": {
+            "longitude": "number",
+            "latitude": "number"
+          },
+          "zoom": "number",
+          "markers": "array",
+          "route": {
+            "routeId": "string",
+            "distance": "number",
+            "duration": "number",
+            "strategy": "walking",
+            "points": "array",
+            "steps": "array"
+          },
+          "mapUrl": "string"
+        }
+      }
+    },
+    {
+      "name": "上海自驾游路线",
+      "method": "POST",
+      "url": "/api/route/map",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "locations": ["上海外滩", "南京路步行街", "豫园", "新天地"],
+        "strategy": "driving",
+        "includeSteps": true
+      }
+    },
+    {
+      "name": "广州公交路线",
+      "method": "POST",
+      "url": "/api/route/map",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "locations": ["广州塔", "珠江夜游", "北京路", "陈家祠"],
+        "strategy": "transit",
+        "includeSteps": true
+      }
+    }
+  ],
+  "curlExamples": [
+    {
+      "name": "使用curl测试北京路线",
+      "command": "curl -X POST \"http://localhost:8080/api/route/map\" -H \"Content-Type: application/json\" -d '{\"locations\":[\"北京天安门\",\"故宫博物院\",\"景山公园\"],\"strategy\":\"walking\",\"includeSteps\":true}'"
+    },
+    {
+      "name": "使用PowerShell测试",
+      "command": "$body = @{locations=@('北京天安门','故宫博物院','景山公园'); strategy='walking'; includeSteps=$true} | ConvertTo-Json; Invoke-RestMethod -Uri 'http://localhost:8080/api/route/map' -Method POST -Body $body -ContentType 'application/json'"
+    }
+  ],
+  "javascriptExample": {
+    "description": "使用JavaScript fetch API测试",
+    "code": "fetch('http://localhost:8080/api/route/map', {\n  method: 'POST',\n  headers: {\n    'Content-Type': 'application/json',\n  },\n  body: JSON.stringify({\n    locations: ['北京天安门', '故宫博物院', '景山公园'],\n    strategy: 'walking',\n    includeSteps: true\n  })\n})\n.then(response => response.json())\n.then(data => {\n  console.log('地图生成成功:', data);\n  console.log('地图URL:', data.data.mapUrl);\n})\n.catch(error => {\n  console.error('请求失败:', error);\n});"
+  },
+  "pythonExample": {
+    "description": "使用Python requests库测试",
+    "code": "import requests\nimport json\n\nurl = 'http://localhost:8080/api/route/map'\nheaders = {'Content-Type': 'application/json'}\ndata = {\n    'locations': ['北京天安门', '故宫博物院', '景山公园'],\n    'strategy': 'walking',\n    'includeSteps': True\n}\n\nresponse = requests.post(url, headers=headers, json=data)\nresult = response.json()\n\nif result['code'] == 200:\n    print('地图生成成功!')\n    print('地图URL:', result['data']['mapUrl'])\n    print('路线距离:', result['data']['route']['distance'], '米')\n    print('预计耗时:', result['data']['route']['duration'], '秒')\nelse:\n    print('请求失败:', result['message'])"
+  }
+}

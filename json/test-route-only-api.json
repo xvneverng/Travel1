@@ -1,0 +1,119 @@
+{
+  "description": "测试只显示起点终点和路径的地图API",
+  "baseUrl": "http://localhost:8080",
+  "testCases": [
+    {
+      "name": "两点路线测试",
+      "method": "POST",
+      "url": "/api/route/map",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "locations": ["北京天安门", "故宫博物院"],
+        "strategy": "walking",
+        "includeSteps": true
+      },
+      "expectedFeatures": [
+        "地图只显示起点和终点",
+        "显示两点之间的路径",
+        "不显示地图中心点",
+        "路线清晰可见"
+      ]
+    },
+    {
+      "name": "多点路线测试",
+      "method": "POST",
+      "url": "/api/route/map",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "locations": ["北京天安门", "故宫博物院", "景山公园", "北海公园"],
+        "strategy": "driving",
+        "includeSteps": true
+      },
+      "expectedFeatures": [
+        "地图显示起点、途经点和终点",
+        "显示完整的路线路径",
+        "途经点作为路线的一部分显示",
+        "路线连续不断"
+      ]
+    },
+    {
+      "name": "快速测试",
+      "method": "GET",
+      "url": "/api/route/map/quick?locations=上海外滩,南京路步行街&strategy=walking",
+      "expectedFeatures": [
+        "快速生成两点路线",
+        "只显示起点和终点",
+        "显示步行路线"
+      ]
+    }
+  ],
+  "curlExamples": [
+    {
+      "name": "测试两点路线",
+      "command": "curl -X POST \"http://localhost:8080/api/route/map\" -H \"Content-Type: application/json\" -d '{\"locations\":[\"北京天安门\",\"故宫博物院\"],\"strategy\":\"walking\",\"includeSteps\":true}'"
+    },
+    {
+      "name": "测试多点路线",
+      "command": "curl -X POST \"http://localhost:8080/api/route/map\" -H \"Content-Type: application/json\" -d '{\"locations\":[\"北京天安门\",\"故宫博物院\",\"景山公园\"],\"strategy\":\"driving\",\"includeSteps\":true}'"
+    }
+  ],
+  "PowerShellExamples": [
+    {
+      "name": "PowerShell测试两点路线",
+      "command": "$body = @{locations=@('北京天安门','故宫博物院'); strategy='walking'; includeSteps=$true} | ConvertTo-Json; Invoke-RestMethod -Uri 'http://localhost:8080/api/route/map' -Method POST -Body $body -ContentType 'application/json'"
+    },
+    {
+      "name": "PowerShell测试多点路线",
+      "command": "$body = @{locations=@('北京天安门','故宫博物院','景山公园'); strategy='driving'; includeSteps=$true} | ConvertTo-Json; Invoke-RestMethod -Uri 'http://localhost:8080/api/route/map' -Method POST -Body $body -ContentType 'application/json'"
+    }
+  ],
+  "expectedMapUrlFormat": {
+    "description": "生成的地图URL应该只包含起点、终点和路径信息",
+    "urlPattern": "https://uri.amap.com/navigation?from=起点坐标&fromName=起点名称&to=终点坐标&toName=终点名称&waypoints=途经点坐标&src=tourism-backend&mode=路线类型",
+    "features": [
+      "不包含地图中心点参数",
+      "只显示必要的起点和终点信息",
+      "途经点作为路线的一部分",
+      "路线类型根据strategy参数设置"
+    ]
+  },
+  "mapDisplayFeatures": [
+    "地图自动缩放到适合显示完整路线",
+    "起点用红色标记显示",
+    "终点用绿色标记显示",
+    "途经点用蓝色标记显示",
+    "路线用不同颜色的线条连接",
+    "不显示不必要的地图中心点"
+  ]
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

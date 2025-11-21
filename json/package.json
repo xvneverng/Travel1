@@ -1,0 +1,22 @@
+{
+  "name": "travel-guide-vue",
+  "version": "1.0.0",
+  "description": "沿途路书 Vue版本",
+  "main": "main.js",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "start": "python -m http.server 8000"
+  },
+  "dependencies": {
+    "vue": "^3.3.0"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "vue",
+    "travel",
+    "guide",
+    "itinerary"
+  ],
+  "author": "tourism",
+  "license": "MIT"
+}

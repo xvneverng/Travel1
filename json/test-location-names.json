@@ -1,0 +1,107 @@
+{
+  "description": "测试地图URL中地点名称显示功能",
+  "baseUrl": "http://localhost:8080",
+  "testCases": [
+    {
+      "name": "测试地点名称显示",
+      "method": "POST",
+      "url": "/api/route/map",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "locations": ["北京天安门", "故宫博物院"],
+        "strategy": "walking",
+        "includeSteps": true
+      },
+      "expectedMapUrl": {
+        "description": "生成的地图URL应该包含地点名称",
+        "urlPattern": "https://uri.amap.com/navigation?from=经度,纬度&fromName=北京天安门&to=经度,纬度&toName=故宫博物院&src=tourism-backend&mode=walk",
+        "features": [
+          "fromName参数包含起点名称：北京天安门",
+          "toName参数包含终点名称：故宫博物院",
+          "地点名称正确进行URL编码",
+          "不显示坐标，只显示地点名称"
+        ]
+      }
+    },
+    {
+      "name": "测试多点路线地点名称",
+      "method": "POST",
+      "url": "/api/route/map",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "locations": ["上海外滩", "南京路步行街", "豫园", "新天地"],
+        "strategy": "driving",
+        "includeSteps": true
+      },
+      "expectedMapUrl": {
+        "description": "多点路线应该正确显示起点和终点名称",
+        "urlPattern": "https://uri.amap.com/navigation?from=经度,纬度&fromName=上海外滩&to=经度,纬度&toName=新天地&waypoints=经度,纬度;经度,纬度&src=tourism-backend&mode=car",
+        "features": [
+          "fromName参数包含起点名称：上海外滩",
+          "toName参数包含终点名称：新天地",
+          "waypoints参数包含途经点坐标",
+          "途经点不显示名称，只显示坐标"
+        ]
+      }
+    }
+  ],
+  "curlExamples": [
+    {
+      "name": "测试地点名称显示",
+      "command": "curl -X POST \"http://localhost:8080/api/route/map\" -H \"Content-Type: application/json\" -d '{\"locations\":[\"北京天安门\",\"故宫博物院\"],\"strategy\":\"walking\",\"includeSteps\":true}'"
+    }
+  ],
+  "PowerShellExamples": [
+    {
+      "name": "PowerShell测试地点名称",
+      "command": "$body = @{locations=@('北京天安门','故宫博物院'); strategy='walking'; includeSteps=$true} | ConvertTo-Json; Invoke-RestMethod -Uri 'http://localhost:8080/api/route/map' -Method POST -Body $body -ContentType 'application/json'"
+    }
+  ],
+  "mapDisplayFeatures": [
+    "地图上显示的起点标记旁边显示地点名称",
+    "地图上显示的终点标记旁边显示地点名称",
+    "地点名称使用中文显示",
+    "地点名称正确进行URL编码处理",
+    "不显示坐标信息，只显示地点名称"
+  ],
+  "urlParameters": {
+    "from": "起点坐标（经度,纬度）",
+    "fromName": "起点名称（URL编码）",
+    "to": "终点坐标（经度,纬度）",
+    "toName": "终点名称（URL编码）",
+    "waypoints": "途经点坐标（可选）",
+    "src": "来源标识",
+    "mode": "路线类型（car/walk/bus）"
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tourism.mapper.TravelGuideMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.tourism.entity.TravelGuide">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="user_id" property="userId" jdbcType="VARCHAR"/>
+        <result column="guide_name" property="guideName" jdbcType="VARCHAR"/>
+        <result column="destination" property="destination" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="LONGVARCHAR"/>
+        <result column="cover_image" property="coverImage" jdbcType="VARCHAR"/>
+        <result column="status" property="status" jdbcType="VARCHAR"/>
+        <result column="is_public" property="isPublic" jdbcType="BOOLEAN"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+        <result column="updated_time" property="updatedTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, user_id, guide_name, destination, description, cover_image, status, is_public, created_time, updated_time
+    </sql>
+
+    <!-- 根据用户ID查询路书列表 -->
+    <select id="findByUserId" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM travel_guide 
+        WHERE user_id = #{userId}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 根据路书名称查询路书 -->
+    <select id="findByGuideName" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM travel_guide 
+        WHERE guide_name = #{guideName}
+    </select>
+
+    <!-- 根据目的地查询路书列表 -->
+    <select id="findByDestination" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM travel_guide 
+        WHERE destination = #{destination}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 根据状态查询路书列表 -->
+    <select id="findByStatus" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM travel_guide 
+        WHERE status = #{status}
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 查询公开的路书列表 -->
+    <select id="findPublicGuides" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM travel_guide 
+        WHERE is_public = true AND status = 'published'
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 根据用户ID和路书名称查询路书 -->
+    <select id="findByUserIdAndGuideName" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM travel_guide 
+        WHERE user_id = #{userId} AND guide_name = #{guideName}
+    </select>
+
+    <!-- 检查路书名称是否存在 -->
+    <select id="existsByGuideName" resultType="java.lang.Boolean">
+        SELECT COUNT(*) > 0 
+        FROM travel_guide 
+        WHERE guide_name = #{guideName}
+    </select>
+
+    <!-- 根据关键词搜索路书 -->
+    <select id="searchByKeyword" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM travel_guide 
+        WHERE guide_name LIKE CONCAT('%', #{keyword}, '%')
+        OR destination LIKE CONCAT('%', #{keyword}, '%')
+        OR description LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY created_time DESC
+    </select>
+
+    <!-- 统计各状态路书数量 -->
+    <select id="countByStatus" resultType="java.util.Map">
+        SELECT 
+            status,
+            COUNT(*) as count
+        FROM travel_guide 
+        GROUP BY status
+        ORDER BY count DESC
+    </select>
+
+    <!-- 统计各目的地路书数量 -->
+    <select id="countByDestination" resultType="java.util.Map">
+        SELECT 
+            destination,
+            COUNT(*) as count
+        FROM travel_guide 
+        WHERE destination IS NOT NULL AND destination != ''
+        GROUP BY destination
+        ORDER BY count DESC
+    </select>
+
+</mapper>

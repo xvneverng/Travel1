@@ -1,0 +1,86 @@
+{
+  "description": "旅游路线规划API测试用例",
+  "baseUrl": "http://localhost:8080/route",
+  "testCases": [
+    {
+      "name": "地理编码测试",
+      "method": "GET",
+      "url": "/geocode?address=北京天安门",
+      "expectedResponse": {
+        "code": 200,
+        "message": "地理编码成功",
+        "data": {
+          "name": "北京天安门",
+          "longitude": "number",
+          "latitude": "number",
+          "address": "string",
+          "city": "string"
+        }
+      }
+    },
+    {
+      "name": "快速地图生成测试",
+      "method": "GET", 
+      "url": "/map/quick?locations=北京天安门,故宫博物院,颐和园&strategy=driving",
+      "expectedResponse": {
+        "code": 200,
+        "message": "地图生成成功",
+        "data": {
+          "mapId": "string",
+          "center": {
+            "longitude": "number",
+            "latitude": "number"
+          },
+          "zoom": "number",
+          "markers": "array",
+          "route": {
+            "routeId": "string",
+            "distance": "number",
+            "duration": "number",
+            "strategy": "driving",
+            "points": "array",
+            "steps": "array"
+          },
+          "mapUrl": "string"
+        }
+      }
+    },
+    {
+      "name": "POST地图生成测试",
+      "method": "POST",
+      "url": "/map",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "locations": ["北京天安门", "故宫博物院", "颐和园"],
+        "strategy": "driving",
+        "includeSteps": true
+      },
+      "expectedResponse": {
+        "code": 200,
+        "message": "地图生成成功",
+        "data": {
+          "mapId": "string",
+          "mapUrl": "string"
+        }
+      }
+    }
+  ],
+  "usage": {
+    "地理编码": "GET /route/geocode?address=地点名称",
+    "快速地图生成": "GET /route/map/quick?locations=地点1,地点2,地点3&strategy=driving",
+    "POST地图生成": "POST /route/map",
+    "测试API连接": "GET /route/test-api",
+    "测试地理编码": "GET /route/test-geocode?address=北京",
+    "健康检查": "GET /route/health"
+  },
+  "features": [
+    "地点名称自动转换为地理坐标",
+    "支持多点路径规划",
+    "生成包含路线的地图URL",
+    "支持驾车、步行、公交三种路线策略",
+    "返回详细的路线信息和步骤",
+    "自动计算地图中心点和缩放级别"
+  ]
+}

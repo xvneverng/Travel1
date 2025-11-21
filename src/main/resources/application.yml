@@ -1,0 +1,81 @@
+server:
+  port: 8080
+# servlet:
+#  context-path: /api
+
+spring:
+  application:
+    name: travel-backend
+  profiles:
+    active: dev
+  
+  # 数据源配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/travel_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: "131123jl"
+
+# MyBatis Plus配置
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  mapper-locations: classpath*:/mapper/**/*.xml
+
+# Druid连接池配置
+druid:
+  initial-size: 5
+  min-idle: 5
+  max-active: 20
+  max-wait: 60000
+  time-between-eviction-runs-millis: 60000
+  min-evictable-idle-time-millis: 300000
+  validation-query: SELECT 1 FROM DUAL
+  test-while-idle: true
+  test-on-borrow: false
+  test-on-return: false
+  pool-prepared-statements: true
+  max-pool-prepared-statement-per-connection-size: 20
+  filters: stat,wall,slf4j
+  connection-properties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+
+# 高德地图API配置
+amap:
+  api:
+    key: a5ec62465168a9ddc9bb6f5cb763a874
+    base-url: https://restapi.amap.com/v3
+    geocode-url: /geocode/geo
+    direction-url: /direction/driving
+    place-search-url: /place/text
+
+# Dify API配置
+dify:
+  api:
+    # Dify API密钥（请在Dify平台获取）
+    api-key: app-BoKbGaBooRzT7SH28lgYbskI
+    # Dify API基础URL
+    # 云服务（正确）: https://api.dify.ai/v1
+    # 自部署: http://your-dify-domain/v1
+    # 注意：必须包含 /v1 路径，且是 api.dify.ai 不是 cloud.dify.ai
+    base-url: https://api.dify.ai/v1
+    # 工作流API路径（不需要配置，代码中会自动构建）
+    workflow-api-url: /workflows/run
+    # 聊天API路径
+    chat-api-url: /chat-messages
+    # 请求超时时间（毫秒）
+    timeout: 30000
+
+# 日志配置
+logging:
+  level:
+    com.tourism: DEBUG
+    org.springframework.web: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tourism.mapper.WeatherSuggestionMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="BaseResultMap" type="com.tourism.entity.WeatherSuggestion">
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <result column="suggestion_type" property="suggestionType" jdbcType="VARCHAR"/>
+        <result column="content" property="content" jdbcType="LONGVARCHAR"/>
+        <result column="weather_condition" property="weatherCondition" jdbcType="VARCHAR"/>
+        <result column="temperature_min" property="temperatureMin" jdbcType="INTEGER"/>
+        <result column="temperature_max" property="temperatureMax" jdbcType="INTEGER"/>
+        <result column="priority" property="priority" jdbcType="VARCHAR"/>
+        <result column="is_active" property="isActive" jdbcType="BOOLEAN"/>
+        <result column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
+        <result column="updated_time" property="updatedTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 基础字段 -->
+    <sql id="Base_Column_List">
+        id, suggestion_type, content, weather_condition, 
+        temperature_min, temperature_max, priority, is_active, created_time, updated_time
+    </sql>
+
+    <!-- 根据建议类型查询天气建议列表 -->
+    <select id="findBySuggestionType" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM weather_suggestion 
+        WHERE suggestion_type = #{suggestionType} 
+        AND is_active = true
+        ORDER BY priority ASC
+    </select>
+
+    <!-- 根据天气条件查询天气建议列表 -->
+    <select id="findByWeatherCondition" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM weather_suggestion 
+        WHERE weather_condition = #{weatherCondition} 
+        AND is_active = true
+        ORDER BY priority ASC
+    </select>
+
+
+    <!-- 查询所有启用的天气建议 -->
+    <select id="findActiveSuggestions" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM weather_suggestion 
+        WHERE is_active = true
+        ORDER BY priority ASC, id ASC
+    </select>
+
+    <!-- 根据关键词搜索天气建议 -->
+    <select id="searchByKeyword" resultMap="BaseResultMap">
+        SELECT 
+            <include refid="Base_Column_List"/>
+        FROM weather_suggestion 
+        WHERE content LIKE CONCAT('%', #{keyword}, '%')
+        AND is_active = true
+        ORDER BY priority ASC
+    </select>
+
+    <!-- 统计各类型建议数量 -->
+    <select id="countBySuggestionType" resultType="java.util.Map">
+        SELECT 
+            suggestion_type,
+            COUNT(*) as count
+        FROM weather_suggestion 
+        WHERE is_active = true
+        GROUP BY suggestion_type
+        ORDER BY count DESC
+    </select>
+
+    <!-- 统计各天气条件建议数量 -->
+    <select id="countByWeatherCondition" resultType="java.util.Map">
+        SELECT 
+            weather_condition,
+            COUNT(*) as count
+        FROM weather_suggestion 
+        WHERE is_active = true
+        AND weather_condition IS NOT NULL AND weather_condition != ''
+        GROUP BY weather_condition
+        ORDER BY count DESC
+    </select>
+
+</mapper>
