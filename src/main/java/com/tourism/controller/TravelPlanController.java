@@ -54,9 +54,11 @@ public class TravelPlanController {
         try {
             log.info("生成旅游计划（阻塞模式）: destination={}, duration={}, num={}, user={}", 
                     request.getDestination(), request.getDuration(), request.getNum(), request.getUserId());
+            log.info("[TravelPlanController] Step1: 收到前端请求并开始处理 generateTravelPlan");
             
             // 构建工作流输入参数（按照Dify工作流的结构化输出参数格式）
             Map<String, Object> inputs = new HashMap<>();
+            log.info("[TravelPlanController] Step2: 初始化 inputs 完成");
             
             log.info("📋 接收到的请求参数:");
             log.info("   intentType: {}", request.getIntentType());
@@ -66,6 +68,7 @@ public class TravelPlanController {
             log.info("   duration: {}", request.getDuration());
             log.info("   specialNeed: {}", request.getSpecialNeed());
             log.info("   instruction: {}", request.getInstruction());
+            log.info("[TravelPlanController] Step3: 原始请求参数日志输出完成");
             
             // 必填字段
             // intent_type: 判断是否包含旅游相关意图, 1表示包含, 0表示不包含
@@ -82,6 +85,7 @@ public class TravelPlanController {
             
             // special_need: 解析出的特殊需求信息, 无则为0
             inputs.put("special_need", request.getSpecialNeed() != null ? request.getSpecialNeed() : "0");
+            log.info("[TravelPlanController] Step4: 必填字段写入 inputs 完成");
             
             // 非必填字段
             // date: 解析出的日期信息, 无则为0
@@ -97,6 +101,7 @@ public class TravelPlanController {
             } else {
                 inputs.put("instruction", "0");
             }
+            log.info("[TravelPlanController] Step5: 非必填字段写入 inputs 完成");
             
             // user_input: 用户的原始输入（Dify工作流必需参数）
             // 优先使用传入的userInput，否则使用instruction，最后使用默认值
@@ -110,7 +115,15 @@ public class TravelPlanController {
             } else {
                 finalUserInput = "我想规划一次旅行";
             }
+
+            // Dify 限制：user_input 长度必须小于 48 字符，这里统一做截断保护
+            if (finalUserInput != null && finalUserInput.length() > 48) {
+                log.warn("[TravelPlanController] user_input 长度超过 48, 原始长度={}, 将被截断.", finalUserInput.length());
+                finalUserInput = finalUserInput.substring(0, 48);
+            }
+
             inputs.put("user_input", finalUserInput);
+            log.info("[TravelPlanController] Step6: user_input 构建完成, 值={}", finalUserInput);
             
             // 如果有文件ID，添加文件输入
             if (request.getUploadFileId() != null) {
@@ -124,11 +137,13 @@ public class TravelPlanController {
                 // 假设工作流变量名为 "orig_mail" 或 "file_input"
                 // 实际使用时需要根据工作流配置调整
                 inputs.put("orig_mail", new Object[]{fileInput});
+                log.info("[TravelPlanController] Step7: 已根据 uploadFileId 添加入参 orig_mail, uploadFileId={}", request.getUploadFileId());
             }
             
             // 合并额外的输入参数
             if (request.getWorkflowInputs() != null) {
                 inputs.putAll(request.getWorkflowInputs());
+                log.info("[TravelPlanController] Step8: 已合并 workflowInputs, size={}", request.getWorkflowInputs().size());
             }
             
             // 记录最终构建的inputs（用于调试）
@@ -137,16 +152,20 @@ public class TravelPlanController {
                 log.info("   {} = {} (类型: {})", entry.getKey(), entry.getValue(), 
                         entry.getValue() != null ? entry.getValue().getClass().getSimpleName() : "null");
             }
+            log.info("[TravelPlanController] Step9: inputs 全量打印完成，准备调用 DifyService.runWorkflowBlocking");
             
             // 调用Dify工作流
             String user = request.getUserId() != null ? request.getUserId() : "default-user";
+            log.info("[TravelPlanController] Step10: 准备调用 DifyService.runWorkflowBlocking, user={}, workflowId={}", user, request.getWorkflowId());
             DifyWorkflowResponse response = difyService.runWorkflowBlocking(
                     inputs, 
                     user, 
                     request.getWorkflowId()
             );
+            log.info("[TravelPlanController] Step11: DifyService.runWorkflowBlocking 调用结束, response 是否为空={}", response == null ? "true" : "false");
             
             if (response != null && response.getData() != null) {
+                log.info("[TravelPlanController] Step12: 收到非空 response 且 data 不为空, 开始组装返回给前端的数据");
                 Map<String, Object> result = new HashMap<>();
                 result.put("code", 200);
                 result.put("message", "旅游计划生成成功");
@@ -161,6 +180,7 @@ public class TravelPlanController {
                         response.getWorkflowRunId(), response.getData().getStatus());
                 return ResponseEntity.ok(result);
             } else {
+                log.warn("[TravelPlanController] Step12-Error: response 或 response.data 为空, 准备返回 500 错误给前端");
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("code", 500);
                 errorResponse.put("message", "工作流执行失败：响应为空");
@@ -169,6 +189,7 @@ public class TravelPlanController {
             
         } catch (Exception e) {
             log.error("生成旅游计划异常: {}", e.getMessage(), e);
+            log.error("[TravelPlanController] Step-Exception: generateTravelPlan 捕获到异常, message={}", e.getMessage());
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("code", 500);
             errorResponse.put("message", "生成失败: " + e.getMessage());

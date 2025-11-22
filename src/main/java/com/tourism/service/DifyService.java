@@ -134,36 +134,47 @@ public class DifyService {
     public DifyWorkflowResponse runWorkflowBlocking(Map<String, Object> inputs, String user, String workflowId) {
         try {
             log.info("开始运行Dify工作流（阻塞模式）: user={}, workflowId={}", user, workflowId);
+            log.info("[DifyService] Blocking-Step1: 进入 runWorkflowBlocking 方法");
             
             // 构建工作流运行URL（final变量，用于lambda表达式）
             final String workflowUrl;
             if (StringUtils.hasText(workflowId)) {
                 workflowUrl = difyConfig.getBaseUrl() + "/workflows/" + workflowId + "/run";
+                log.info("[DifyService] Blocking-Step2: 使用指定 workflowId 构建 URL = {}", workflowUrl);
             } else {
                 workflowUrl = difyConfig.getBaseUrl() + "/workflows/run";
+                log.info("[DifyService] Blocking-Step2: 使用默认工作流 URL = {}", workflowUrl);
             }
             
             // 检查API密钥
             String apiKey = difyConfig.getApiKey();
             if (apiKey == null || apiKey.trim().isEmpty()) {
                 log.error("❌ Dify API密钥未配置或为空！");
+                log.error("[DifyService] Blocking-Step3-Error: apiKey 为空，直接返回 null");
                 return null;
             }
-            
+
             // 去除可能的空格和换行符
             apiKey = apiKey.trim();
+            log.info("[DifyService] Blocking-Step3: apiKey 去除空白后长度={}, 前缀={}", apiKey.length(),
+                    apiKey.length() > 8 ? apiKey.substring(0, 8) + "..." : apiKey);
             
             // 验证API密钥格式
             if (!apiKey.startsWith("app-")) {
                 log.error("❌ API密钥格式错误！应该以'app-'开头");
+                log.error("[DifyService] Blocking-Step4-Error: apiKey 格式错误, 当前前缀={}",
+                        apiKey.length() > 8 ? apiKey.substring(0, 8) + "..." : apiKey);
                 return null;
             }
+            log.info("[DifyService] Blocking-Step4: apiKey 格式校验通过");
             
             // 构建请求体
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("inputs", inputs != null ? inputs : new HashMap<>());
             requestBody.put("response_mode", "blocking");
             requestBody.put("user", user);
+            log.info("[DifyService] Blocking-Step5: 已构建 requestBody, inputs 是否为空={}, user={}",
+                    (inputs == null ? "true" : "false"), user);
             
             // 详细记录请求体内容（用于调试）
             try {
@@ -173,11 +184,14 @@ public class DifyService {
                 log.info("   Method: POST");
                 log.info("   Body: {}", requestBodyJson);
                 log.info("   Inputs详情: {}", objectMapper.writeValueAsString(inputs));
+                log.info("[DifyService] Blocking-Step6: 请求体序列化成功，准备通过 WebClient 发送请求");
             } catch (Exception e) {
                 log.warn("序列化请求体失败: {}", e.getMessage());
+                log.warn("[DifyService] Blocking-Step6-Warn: 请求体序列化失败，但仍继续调用 WebClient");
             }
             
             // 发送请求
+            log.info("[DifyService] Blocking-Step7: 开始通过 WebClient 发送请求到 Dify, url={}", workflowUrl);
             DifyWorkflowResponse response = webClientBuilder.build()
                     .post()
                     .uri(workflowUrl)
@@ -194,29 +208,35 @@ public class DifyService {
                             log.error("当前inputs: {}", inputs);
                         }
                         
+                        log.error("[DifyService] Blocking-Step8-Error: 收到 Dify 非 2xx 状态码, status={}", statusCode);
                         return errorResponse.bodyToMono(String.class)
                                 .defaultIfEmpty("无响应体")
                                 .flatMap(body -> {
                                     log.error("📥 Dify API错误响应体: {}", body);
+                                    log.error("[DifyService] Blocking-Step8-Error: 错误响应体已记录");
                                     return Mono.error(new RuntimeException("Dify API调用失败: " + statusCode + "，错误: " + body));
                                 });
                     })
                     .bodyToMono(DifyWorkflowResponse.class)
                     .timeout(Duration.ofSeconds(difyConfig.getTimeout() / 1000))
                     .block();
+            log.info("[DifyService] Blocking-Step9: WebClient 调用结束, response 是否为空={}", response == null ? "true" : "false");
             
             if (response != null) {
                 log.info("工作流执行成功: workflowRunId={}, status={}", 
                         response.getWorkflowRunId(), 
                         response.getData() != null ? response.getData().getStatus() : "unknown");
+                log.info("[DifyService] Blocking-Step10: response 非空，已记录 workflowRunId 和 status");
             } else {
                 log.error("工作流执行失败: 响应为空");
+                log.error("[DifyService] Blocking-Step10-Error: response 为空，可能是 WebClient 超时或异常");
             }
             
             return response;
             
         } catch (Exception e) {
             log.error("运行工作流异常: {}", e.getMessage(), e);
+            log.error("[DifyService] Blocking-Step-Exception: runWorkflowBlocking 捕获到异常, message={}", e.getMessage());
             return null;
         }
     }

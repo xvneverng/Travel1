@@ -227,7 +227,7 @@ public class AmapApiUtil {
      */
     public MapResponse generateMap(List<Location> locations, String strategy) {
         try {
-            log.info("开始生成地图数据: {} 个地点", locations.size());
+            log.info("开始生成地图数据: {} 个地点, strategy={}", locations.size(), strategy);
             
             // 1. 计算地图中心点
             MapResponse.CenterPoint center = calculateMapCenter(locations);
@@ -235,10 +235,10 @@ public class AmapApiUtil {
             // 2. 创建地图标记
             List<MapResponse.MapMarker> markers = createMapMarkers(locations);
             
-            // 3. 进行路径规划
+            // 3. 进行路径规划（轻量级 marker 策略直接跳过路线规划）
             MapResponse.RouteInfo routeInfo = null;
             log.info("开始路径规划检查: 地点数量={}, 策略={}", locations.size(), strategy);
-            if (locations.size() >= 2) {
+            if (!"marker".equals(strategy) && locations.size() >= 2) {
                 log.info("满足路径规划条件，开始调用planRoute方法");
                 routeInfo = planRoute(locations, strategy);
                 if (routeInfo != null) {
@@ -248,6 +248,8 @@ public class AmapApiUtil {
                 } else {
                     log.warn("路径规划失败，将只显示标记点");
                 }
+            } else if ("marker".equals(strategy)) {
+                log.info("检测到 marker 策略，跳过路径规划，仅生成标记点地图URL");
             } else {
                 log.warn("地点数量不足，跳过路径规划: {}", locations.size());
             }

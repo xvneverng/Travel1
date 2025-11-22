@@ -89,7 +89,9 @@ public class RoutePlanningService {
     private boolean isValidStrategy(String strategy) {
         return "driving".equals(strategy) || 
                "walking".equals(strategy) || 
-               "transit".equals(strategy);
+               "transit".equals(strategy) ||
+               // marker: 仅生成标记点/简单路线URL，用于轻量级展示
+               "marker".equals(strategy);
     }
     
     
